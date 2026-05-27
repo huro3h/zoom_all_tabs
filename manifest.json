@@ -3,9 +3,13 @@
   "name": "Zoom All Tabs",
   "version": "1.0",
   "description": "A Chrome extension to change the zoom factor of all open tabs at once via popup or shortcuts.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
   "permissions": [
     "tabs",
-    "activeTab",
     "storage"
   ],
   "background": {
@@ -13,7 +17,11 @@
   },
   "action": {
     "default_title": "Zoom All Tabs",
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png"
+    }
   },
   "commands": {
     "a-zoom-90": { "description": "すべてのタブを90%にする" },
