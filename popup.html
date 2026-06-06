@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <style>
@@ -7,7 +7,7 @@
       font-family: sans-serif;
       margin: 10px;
       background-color: #f5f5f5;
-      width: 200px;
+      width: 210px;
     }
     .section-title {
       font-size: 11px;
@@ -49,13 +49,25 @@
       margin-bottom: 6px;
       font-size: 12px;
     }
-    .setting-row input {
+    .setting-row input[type="number"] {
       width: 50px;
       padding: 3px;
       font-size: 12px;
       border: 1px solid #ccc;
       border-radius: 4px;
       text-align: right;
+    }
+    .option-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      font-size: 11px;
+      color: #333;
+      line-height: 1.3;
+    }
+    .option-row input[type="checkbox"] {
+      margin-top: 2px;
+      cursor: pointer;
     }
     #save-btn {
       width: 100%;
@@ -64,7 +76,7 @@
       border-color: #2e8b57;
       font-size: 12px;
       padding: 5px 0;
-      margin-top: 4px;
+      margin-top: 8px;
     }
     #save-btn:hover {
       background-color: #3cb371;
@@ -102,6 +114,12 @@
   <label for="input-c2">カスタム 2:</label>
   <div><input type="number" id="input-c2" min="25" max="500"> %</div>
 </div>
+
+<div class="option-row">
+  <input type="checkbox" id="check-reset-closed">
+  <label for="check-reset-closed">タブを閉じたときにズームをリセットする（サイトごとに記憶しない）</label>
+</div>
+
 <button id="save-btn">設定を保存</button>
 
 <script src="popup.js"></script>
