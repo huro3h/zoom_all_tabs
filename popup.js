@@ -8,28 +8,28 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   let customValues = {
     c1: 1.50,
-    c2: 2.00,
-    resetClosed: true // デフォルトは閉じたらリセット（ON）
+    c2: 2.00
   };
   
-  const stored = await chrome.storage.local.get(['custom1', 'custom2', 'resetClosed']);
+  // 1. ストレージからカスタム倍率のみを読み込む
+  const stored = await chrome.storage.local.get(['custom1', 'custom2']);
   if (stored.custom1) customValues.c1 = stored.custom1;
   if (stored.custom2) customValues.c2 = stored.custom2;
-  if (stored.resetClosed !== undefined) customValues.resetClosed = stored.resetClosed;
   
+  // HTML要素の取得
   const inputC1 = document.getElementById('input-c1');
   const inputC2 = document.getElementById('input-c2');
-  const checkReset = document.getElementById('check-reset-closed');
   const btnC1 = document.getElementById('custom-1');
   const btnC2 = document.getElementById('custom-2');
   const saveBtn = document.getElementById('save-btn');
   
+  // UIに反映
   inputC1.value = Math.round(customValues.c1 * 100);
   inputC2.value = Math.round(customValues.c2 * 100);
-  checkReset.checked = customValues.resetClosed;
   btnC1.textContent = `${inputC1.value}%`;
   btnC2.textContent = `${inputC2.value}%`;
   
+  // --- クリックイベント ---
   Object.keys(fixedZoomMap).forEach(id => {
     document.getElementById(id).addEventListener('click', () => {
       sendZoomMessage(fixedZoomMap[id]);
@@ -39,10 +39,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   btnC1.addEventListener('click', () => sendZoomMessage(customValues.c1));
   btnC2.addEventListener('click', () => sendZoomMessage(customValues.c2));
   
+  // 「Save Settings」ボタン
   saveBtn.addEventListener('click', async () => {
     const val1 = parseInt(inputC1.value, 10);
     const val2 = parseInt(inputC2.value, 10);
-    const isResetClosed = checkReset.checked;
     
     if (isNaN(val1) || val1 < 25 || val1 > 500 || isNaN(val2) || val2 < 25 || val2 > 500) {
       alert('Please enter a value between 25 and 500.');
@@ -52,20 +52,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     const zoomFactor1 = val1 / 100;
     const zoomFactor2 = val2 / 100;
     
+    // ストレージに保存
     await chrome.storage.local.set({
       custom1: zoomFactor1,
-      custom2: zoomFactor2,
-      resetClosed: isResetClosed
+      custom2: zoomFactor2
     });
-    
-    chrome.runtime.sendMessage({ action: 'settingsChanged' });
     
     customValues.c1 = zoomFactor1;
     customValues.c2 = zoomFactor2;
-    customValues.resetClosed = isResetClosed;
     btnC1.textContent = `${val1}%`;
     btnC2.textContent = `${val2}%`;
     
+    // インラインフィードバック (Saved! ✨)
     const originalText = saveBtn.textContent;
     saveBtn.textContent = 'Saved! ✨';
     saveBtn.style.backgroundColor = '#3cb371';
@@ -75,7 +73,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       saveBtn.textContent = originalText;
       saveBtn.style.backgroundColor = '';
       saveBtn.disabled = false;
-    }, 600);
+    }, 1500);
   });
   
   function sendZoomMessage(zoomFactor) {
