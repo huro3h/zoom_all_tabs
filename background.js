@@ -38,9 +38,14 @@ async function changeAllTabsZoom(zoomFactor) {
     });
     
     await Promise.all(zoomPromises);
-    
-    // ズーム適用済みのタブIDリストをストレージに保存
-    await chrome.storage.local.set({ zoomedTabIds: zoomedTabIds });
+
+    // 非同期処理中に閉じられたタブを除外してから保存する
+    // （onRemovedによる削除がこの上書きで無効化される競合状態を防ぐため）
+    const openTabs = await chrome.tabs.query({});
+    const openTabIds = new Set(openTabs.map(t => t.id));
+    const validZoomedTabIds = zoomedTabIds.filter(id => openTabIds.has(id));
+
+    await chrome.storage.local.set({ zoomedTabIds: validZoomedTabIds });
     
   } catch (error) {
     console.error('一括ズーム変更の根本的な処理に失敗しました:', error);
