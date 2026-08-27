@@ -39,6 +39,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   btnC1.addEventListener('click', () => sendZoomMessage(customValues.c1));
   btnC2.addEventListener('click', () => sendZoomMessage(customValues.c2));
   
+  // chrome:// は a href では開けないため tabs.create を使う
+  document.getElementById('zoom-levels-link').addEventListener('click', (event) => {
+    event.preventDefault();
+    chrome.tabs.create({ url: 'chrome://settings/content/zoomLevels' });
+    window.close();
+  });
+  
   // 「Save Settings」ボタン
   saveBtn.addEventListener('click', async () => {
     const val1 = parseInt(inputC1.value, 10);
