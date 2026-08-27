@@ -32,6 +32,7 @@ description: Zoom All Tabs Chrome拡張機能（Manifest V3）の開発・改修
 
 ### ストレージのキー（chrome.storage.local）
 - `custom1` / `custom2` … カスタム倍率（0〜1 の factor 値で保存。UI 上は %）
+- `lastZoomFactor` … 最後に一括指定した倍率。新しく開いたタブを揃え直すために使う（実装ポイント 6 を参照）
 
 ## 重要な実装ポイント（改修時の注意）
 
@@ -51,6 +52,26 @@ description: Zoom All Tabs Chrome拡張機能（Manifest V3）の開発・改修
 
 ### 4. カスタム倍率の入力検証
 `popup.js` の Save で 25〜500（%）の範囲チェック。範囲外は alert。保存は factor 値（%÷100）。manifest の input `min="25" max="500"` と一致させること。
+
+### 5. chrome:// へのリンク
+popup 内の `<a href="chrome://...">` は Chrome にブロックされるため開けない。`chrome.tabs.create()` 経由で開く（`zoom-levels-link` が `chrome://settings/content/zoomLevels` を開く実装）。
+
+### 6. 新しく開いたタブへの再適用
+`changeAllTabsZoom` は「その瞬間開いているタブ」にしか届かないため、一括変更時に閉じていたサイトには古い倍率が per-origin で残り続ける。これを `applyLastZoomFactorToTab` が `onUpdated` で埋める。
+
+- 適用タイミングは 2 箇所。`status==='loading'` かつ `changeInfo.url` があるとき（遷移先が確定しており、描画前に揃うのでちらつかない）と、`status==='complete'` のとき（`changeInfo.url` が来ないリロード等の取りこぼしを拾う）
+- 現在値との差が `ZOOM_FACTOR_EPSILON` 未満なら `setZoom` を呼ばない。Chrome のズームは `1.2^level` の浮動小数で返るため厳密比較は不可、かつ無駄な `setZoom` は `onZoomChange` の連鎖を招く
+- 副作用として、サイト個別にズームを変える運用はできなくなる（遷移のたびに一括倍率へ戻る）。これは「全タブを同じ倍率に保つ」という拡張の趣旨に沿った意図的な挙動
+
+## Chrome 側のズーム保存の仕組み（調査済み・2026-08 時点）
+倍率とレベルの関係は `倍率 = 1.2^level`。保存先は `~/Library/Application Support/Google/Chrome/<Profile>/Preferences` の `partition` 配下。
+
+- `default_zoom_level` … ブラウザ全体の既定倍率（`chrome://settings/appearance` のページのズーム）
+- `per_host_zoom_levels` … ホスト単位の倍率。**既定倍率と一致するエントリは自動削除され、異なる場合のみ残る**
+
+この「既定と一致すると消える」性質が挙動の直感に反する部分を生む。既定が 90% のプロファイルでは 90% を適用するとエントリが消え、100% を適用すると残る。エントリはタブのライフサイクルと無関係なので、タブを閉じても Chrome を再起動しても消えない（これは Chrome の仕様であり不具合ではない）。
+
+他オリジンのエントリを拡張から削除する API は存在しない（`chrome.contentSettings` に zoom は無い）。掃除するには `chrome://settings/content/zoomLevels` で手動削除するか、該当サイトを開いた状態で既定倍率を適用する。
 
 ## 動作確認方法
 1. `chrome://extensions` で「デベロッパーモード」をオン
